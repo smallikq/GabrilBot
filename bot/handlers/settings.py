@@ -1,20 +1,28 @@
 from aiogram import types, F
 
 from ..keyboards.settings_menu import get_settings_keyboard
-from ..aiogram_loader import dp, user_settings
+from ..aiogram_loader import dp, user_settings, bot
 
 
-@dp.message(F.text == "🔧 Настройки")
+def get_settings_text(user_id: int) -> str:
+    """Получить текст настроек для пользователя"""
+    settings = user_settings.get(user_id, {})
+    
+    settings_text = f"⚙️ <b>Настройки бота</b>\n\n"
+    settings_text += f"🔔 Уведомления: {'✅' if settings.get('notifications', True) else '❌'}\n"
+    settings_text += f"💾 Автобэкапы: {'✅' if settings.get('auto_backup', True) else '❌'}\n"
+    settings_text += f"📊 Формат экспорта: {settings.get('export_format', 'excel').upper()}\n"
+    
+    return settings_text
+
+
+@dp.message(F.text == "⚙️ Настройки")
 async def show_settings(message: types.Message):
     """Показать настройки пользователя"""
     user_id = message.from_user.id
     settings = user_settings.get(user_id, {})
-
-    settings_text = f"🔧 <b>Настройки бота</b>\n\n"
-    settings_text += f"🔔 Уведомления: {'✅' if settings.get('notifications', True) else '❌'}\n"
-    settings_text += f"💾 Автобэкапы: {'✅' if settings.get('auto_backup', True) else '❌'}\n"
-    settings_text += f"📊 Формат экспорта: {settings.get('export_format', 'excel').upper()}\n"
-
+    
+    settings_text = get_settings_text(user_id)
     await message.answer(settings_text, reply_markup=get_settings_keyboard(settings), parse_mode="HTML")
 
 
@@ -30,7 +38,17 @@ async def toggle_notifications(callback_query: types.CallbackQuery):
 
     status = "включены" if not current else "выключены"
     await callback_query.answer(f"Уведомления {status}")
-    await show_settings(callback_query.message)
+    
+    # Обновляем сообщение
+    settings = user_settings.get(user_id, {})
+    settings_text = get_settings_text(user_id)
+    await bot.edit_message_text(
+        text=settings_text,
+        chat_id=callback_query.message.chat.id,
+        message_id=callback_query.message.message_id,
+        reply_markup=get_settings_keyboard(settings),
+        parse_mode="HTML"
+    )
 
 
 @dp.callback_query(F.data == "toggle_backup")
@@ -45,7 +63,17 @@ async def toggle_backup(callback_query: types.CallbackQuery):
 
     status = "включены" if not current else "выключены"
     await callback_query.answer(f"Автобэкапы {status}")
-    await show_settings(callback_query.message)
+    
+    # Обновляем сообщение
+    settings = user_settings.get(user_id, {})
+    settings_text = get_settings_text(user_id)
+    await bot.edit_message_text(
+        text=settings_text,
+        chat_id=callback_query.message.chat.id,
+        message_id=callback_query.message.message_id,
+        reply_markup=get_settings_keyboard(settings),
+        parse_mode="HTML"
+    )
 
 
 @dp.callback_query(F.data == "change_export_format")
@@ -73,7 +101,16 @@ async def set_export_format(callback_query: types.CallbackQuery):
     user_settings[user_id]['export_format'] = format_type
     
     await callback_query.answer(f"Формат экспорта: {format_type.upper()}")
-    await show_settings(callback_query.message)
+    
+    # Отправляем обновленные настройки в главное меню настроек
+    settings = user_settings.get(user_id, {})
+    settings_text = get_settings_text(user_id)
+    await bot.send_message(
+        chat_id=callback_query.message.chat.id,
+        text=settings_text,
+        reply_markup=get_settings_keyboard(settings),
+        parse_mode="HTML"
+    )
 
 
 @dp.callback_query(F.data == "reset_settings")
@@ -88,4 +125,14 @@ async def reset_settings(callback_query: types.CallbackQuery):
     }
     
     await callback_query.answer("Настройки сброшены")
-    await show_settings(callback_query.message)
+    
+    # Обновляем сообщение
+    settings = user_settings.get(user_id, {})
+    settings_text = get_settings_text(user_id)
+    await bot.edit_message_text(
+        text=settings_text,
+        chat_id=callback_query.message.chat.id,
+        message_id=callback_query.message.message_id,
+        reply_markup=get_settings_keyboard(settings),
+        parse_mode="HTML"
+    )

@@ -10,7 +10,7 @@ from ..keyboards.export_menu import get_export_keyboard
 from ..aiogram_loader import dp, bot
 
 
-@dp.message(F.text == "💾 Экспорт данных")
+@dp.message(F.text == "📤 Экспорт данных")
 async def export_menu(message: types.Message):
     """Меню экспорта данных (из SQL)"""
     try:
@@ -24,7 +24,7 @@ async def export_menu(message: types.Message):
             await message.answer("❌ Нет данных для экспорта")
             return
 
-        export_text = f"💾 <b>Экспорт данных</b>\n\n"
+        export_text = f"📤 <b>Экспорт данных</b>\n\n"
         export_text += f"📊 В базе: {total_users:,} пользователей\n"
         export_text += f"📁 Доступные форматы:\n\n"
         export_text += f"• <b>Excel</b> - полная совместимость\n"

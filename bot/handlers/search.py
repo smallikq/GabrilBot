@@ -10,32 +10,40 @@ from ..keyboards.main_menu import get_enhanced_main_keyboard
 from ..aiogram_loader import dp
 
 
-@dp.message(F.text == "🔍 Поиск пользователей")
+@dp.message(F.text == "🔎 Поиск пользователей")
 async def search_users(message: types.Message, state: FSMContext):
     """Поиск пользователей в базе"""
     await state.set_state(Form.waiting_for_user_ids)
 
     search_text = (
-        "🔍 <b>Поиск пользователей</b>\n\n"
+        "🔎 <b>Поиск пользователей</b>\n\n"
         "Введите один из вариантов:\n"
         "• <code>ID пользователя</code> (например: 123456789)\n"
         "• <code>@username</code> (например: @john_doe)\n"
         "• <code>Имя пользователя</code> (например: Иван)\n"
-        "• <code>Несколько ID</code> через запятую\n\n"
-        "Или отправьте /cancel для отмены"
+        "• <code>Несколько ID</code> через запятую"
     )
+    
+    from ..keyboards.settings_menu import get_cancel_keyboard
+    await message.answer(search_text, reply_markup=get_cancel_keyboard(), parse_mode="HTML")
 
-    await message.answer(search_text, parse_mode="HTML")
+
+@dp.callback_query(F.data == "cancel_action")
+async def cancel_search_action(callback_query: types.CallbackQuery, state: FSMContext):
+    """Отмена текущего действия"""
+    from ..aiogram_loader import bot
+    await callback_query.answer("Отменено")
+    await state.clear()
+    await bot.edit_message_text(
+        text="❌ Действие отменено",
+        chat_id=callback_query.message.chat.id,
+        message_id=callback_query.message.message_id
+    )
 
 
 @dp.message(Form.waiting_for_user_ids)
 async def process_search_input(message: types.Message, state: FSMContext):
     """Обработка поиска пользователей"""
-    if message.text.strip().lower() == '/cancel':
-        await state.clear()
-        await message.answer("❌ Поиск отменен.", reply_markup=get_enhanced_main_keyboard())
-        return
-
     try:
         from ..utils.database import DatabaseManager
         
@@ -45,9 +53,9 @@ async def process_search_input(message: types.Message, state: FSMContext):
         results = DatabaseManager.search_users(search_term)
 
         if results.empty:
-            await message.answer(f"🔍 По запросу '<code>{search_term}</code>' ничего не найдено", parse_mode="HTML")
+            await message.answer(f"🔎 По запросу '<code>{search_term}</code>' ничего не найдено", parse_mode="HTML")
         else:
-            search_text = f"🔍 <b>Результаты поиска:</b> {len(results)} пользователей\n\n"
+            search_text = f"🔎 <b>Результаты поиска:</b> {len(results)} пользователей\n\n"
 
             for i, (_, user) in enumerate(results.head(10).iterrows(), 1):
                 search_text += f"{i}. <b>ID:</b> <code>{user['User_id']}</code>\n"
@@ -84,21 +92,16 @@ async def date_range_menu(message: types.Message, state: FSMContext):
         "Примеры:\n"
         "• <code>01.09.2024 - 05.09.2024</code>\n"
         "• <code>15.08.2024 - 20.08.2024</code>\n\n"
-        "⚠️ Большие диапазоны могут занять много времени\n"
-        "Или отправьте /cancel для отмены"
+        "⚠️ Большие диапазоны могут занять много времени"
     )
-
-    await message.answer(range_text, parse_mode="HTML")
+    
+    from ..keyboards.settings_menu import get_cancel_keyboard
+    await message.answer(range_text, reply_markup=get_cancel_keyboard(), parse_mode="HTML")
 
 
 @dp.message(Form.waiting_for_date_range)
 async def process_date_range(message: types.Message, state: FSMContext):
     """Обработка диапазона дат"""
-    if message.text.strip().lower() == '/cancel':
-        await state.clear()
-        await message.answer("❌ Ввод отменен.", reply_markup=get_enhanced_main_keyboard())
-        return
-        
     try:
         date_range = message.text.strip()
 

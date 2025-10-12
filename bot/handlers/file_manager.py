@@ -20,8 +20,8 @@ async def file_management(message: types.Message):
 
         management_text = f"🗂 <b>Управление файлами</b>\n\n"
         management_text += f"📋 <b>Reply файлы:</b> {stats['reply_files']}\n"
-        management_text += f"💾 <b>Бэкапы:</b> {stats['backup_files']}\n"
-        management_text += f"📊 <b>Экспорты:</b> {stats['export_files']}\n\n"
+        management_text += f"💾 <b>Резервные копии:</b> {stats['backup_files']}\n"
+        management_text += f"📤 <b>Экспорты:</b> {stats['export_files']}\n\n"
         management_text += f"💽 <b>Общий размер:</b> {stats['total_size_mb']:.1f} МБ"
 
         await message.answer(management_text, reply_markup=get_file_management_keyboard(), parse_mode="HTML")
@@ -88,16 +88,16 @@ async def list_backup_files_callback(callback_query: types.CallbackQuery):
         backup_dir = Path('bot/data/backups')
         
         if not backup_dir.exists():
-            await bot.send_message(callback_query.message.chat.id, "📦 Backup файлы не найдены")
+            await bot.send_message(callback_query.message.chat.id, "💾 Резервные копии не найдены")
             return
 
         backup_files = sorted(backup_dir.glob('*.db'), key=lambda x: x.stat().st_mtime, reverse=True)[:10]
         
         if not backup_files:
-            await bot.send_message(callback_query.message.chat.id, "📦 Backup файлы не найдены")
+            await bot.send_message(callback_query.message.chat.id, "💾 Резервные копии не найдены")
             return
 
-        files_text = f"📦 <b>Backup файлы ({len(backup_files)}):</b>\n\n"
+        files_text = f"💾 <b>Резервные копии ({len(backup_files)}):</b>\n\n"
 
         for i, file_path in enumerate(backup_files, 1):
             stat = file_path.stat()

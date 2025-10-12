@@ -35,21 +35,16 @@ async def manual_add_menu(message: types.Message, state: FSMContext):
         "💡 <b>Советы:</b>\n"
         "• Username должен начинаться с @\n"
         "• Имя и фамилия - опционально\n"
-        "• Можно добавить до 50 пользователей за раз\n\n"
-        "Отправьте /cancel для отмены"
+        "• Можно добавить до 50 пользователей за раз"
     )
     
-    await message.answer(add_text, parse_mode="HTML")
+    from ..keyboards.settings_menu import get_cancel_keyboard
+    await message.answer(add_text, reply_markup=get_cancel_keyboard(), parse_mode="HTML")
 
 
 @dp.message(Form.waiting_for_manual_ids)
 async def process_manual_ids(message: types.Message, state: FSMContext):
     """Обработка ручного добавления ID"""
-    if message.text.strip().lower() == '/cancel':
-        await state.clear()
-        await message.answer("❌ Добавление отменено.", reply_markup=get_enhanced_main_keyboard())
-        return
-    
     try:
         lines = message.text.strip().split('\n')
         

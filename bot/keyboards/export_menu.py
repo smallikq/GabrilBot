@@ -10,10 +10,10 @@ def get_export_keyboard():
         ],
         [
             InlineKeyboardButton(text="📋 JSON", callback_data="export_json"),
-            InlineKeyboardButton(text="📑 Отчет", callback_data="export_report")
+            InlineKeyboardButton(text="📑 HTML отчет", callback_data="export_report")
         ],
         [
-            InlineKeyboardButton(text="📦 Архив (все форматы)", callback_data="export_all")
+            InlineKeyboardButton(text="📦 Все форматы", callback_data="export_all")
         ]
     ])
     return keyboard

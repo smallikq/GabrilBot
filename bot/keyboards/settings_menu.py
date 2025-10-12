@@ -3,24 +3,27 @@ from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 
 def get_settings_keyboard(settings):
     """Клавиатура настроек"""
+    notif_icon = "🔔" if settings.get('notifications', True) else "🔕"
+    backup_icon = "💾" if settings.get('auto_backup', True) else "⏸"
+    
     keyboard = InlineKeyboardMarkup(inline_keyboard=[
         [
             InlineKeyboardButton(
-                text=f"🔔 {'Выключить' if settings.get('notifications', True) else 'Включить'} уведомления",
+                text=f"{notif_icon} Уведомления: {'Вкл' if settings.get('notifications', True) else 'Выкл'}",
                 callback_data="toggle_notifications"
             )
         ],
         [
             InlineKeyboardButton(
-                text=f"💾 {'Выключить' if settings.get('auto_backup', True) else 'Включить'} автобэкапы",
+                text=f"{backup_icon} Автобэкапы: {'Вкл' if settings.get('auto_backup', True) else 'Выкл'}",
                 callback_data="toggle_backup"
             )
         ],
         [
-            InlineKeyboardButton(text="📊 Изменить формат экспорта", callback_data="change_export_format")
+            InlineKeyboardButton(text="📊 Формат экспорта", callback_data="change_export_format")
         ],
         [
-            InlineKeyboardButton(text="🗑 Сбросить настройки", callback_data="reset_settings")
+            InlineKeyboardButton(text="♻️ Сбросить всё", callback_data="reset_settings")
         ]
     ])
     return keyboard
@@ -30,11 +33,11 @@ def get_file_management_keyboard():
     """Клавиатура управления файлами"""
     keyboard = InlineKeyboardMarkup(inline_keyboard=[
         [
-            InlineKeyboardButton(text="📋 Показать Reply", callback_data="list_reply_files"),
-            InlineKeyboardButton(text="💾 Показать бэкапы", callback_data="list_backup_files")
+            InlineKeyboardButton(text="📋 Reply файлы", callback_data="list_reply_files"),
+            InlineKeyboardButton(text="💾 Резервные копии", callback_data="list_backup_files")
         ],
         [
-            InlineKeyboardButton(text="🗑 Очистить старые", callback_data="cleanup_old_files"),
+            InlineKeyboardButton(text="🧹 Очистить старые", callback_data="cleanup_old_files"),
             InlineKeyboardButton(text="📦 Создать архив", callback_data="create_archive")
         ]
     ])
@@ -45,11 +48,11 @@ def get_combined_stats_keyboard():
     """Объединенная клавиатура статистики и аналитики"""
     keyboard = InlineKeyboardMarkup(inline_keyboard=[
         [
-            InlineKeyboardButton(text="📊 Создать отчет", callback_data="create_analytics_report"),
+            InlineKeyboardButton(text="📊 Отчет", callback_data="create_analytics_report"),
             InlineKeyboardButton(text="📈 Графики", callback_data="create_charts")
         ],
         [
-            InlineKeyboardButton(text="💾 Экспорт статистики", callback_data="export_stats"),
+            InlineKeyboardButton(text="📤 Экспорт", callback_data="export_stats"),
             InlineKeyboardButton(text="🔄 Обновить", callback_data="refresh_stats")
         ]
     ])
@@ -95,7 +98,7 @@ def get_advanced_search_keyboard():
     """Клавиатура расширенного поиска"""
     keyboard = InlineKeyboardMarkup(inline_keyboard=[
         [
-            InlineKeyboardButton(text="💎 Premium пользователи", callback_data="search_by_premium"),
+            InlineKeyboardButton(text="💎 Premium", callback_data="search_by_premium"),
             InlineKeyboardButton(text="✅ Verified", callback_data="search_by_verified")
         ],
         [
@@ -103,8 +106,8 @@ def get_advanced_search_keyboard():
             InlineKeyboardButton(text="📅 По дате", callback_data="search_by_date")
         ],
         [
-            InlineKeyboardButton(text="🕐 Последние добавленные", callback_data="search_recent"),
-            InlineKeyboardButton(text="📊 Статистика групп", callback_data="groups_stats")
+            InlineKeyboardButton(text="🕐 Последние", callback_data="search_recent"),
+            InlineKeyboardButton(text="📊 Статистика", callback_data="groups_stats")
         ]
     ])
     return keyboard
@@ -117,5 +120,13 @@ def get_export_filter_keyboard(filter_name: str):
             InlineKeyboardButton(text="💾 Экспортировать", callback_data=f"export_filter_{filter_name}"),
             InlineKeyboardButton(text="❌ Отмена", callback_data="cancel_export")
         ]
+    ])
+    return keyboard
+
+
+def get_cancel_keyboard():
+    """Простая клавиатура с кнопкой отмены"""
+    keyboard = InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(text="❌ Отменить", callback_data="cancel_action")]
     ])
     return keyboard

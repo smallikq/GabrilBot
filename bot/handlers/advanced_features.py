@@ -16,11 +16,11 @@ from ..keyboards.main_menu import get_enhanced_main_keyboard
 from ..states.form_states import Form
 
 
-@dp.message(F.text == "💾 Создать бэкап")
+@dp.message(F.text == "💾 Создать резервную копию")
 async def create_backup_manual(message: types.Message):
     """Создание ручного бэкапа базы данных"""
     try:
-        status_msg = await message.answer("💾 Создаю бэкап базы данных...")
+        status_msg = await message.answer("💾 Создаю резервную копию базы данных...")
         
         # Создаем директорию для бэкапов
         backup_dir = 'bot/data/backups'
@@ -40,7 +40,7 @@ async def create_backup_manual(message: types.Message):
             # Получаем статистику
             stats = DatabaseManager.get_database_stats()
             
-            caption = f"💾 <b>Бэкап базы данных</b>\n\n"
+            caption = f"💾 <b>Резервная копия базы данных</b>\n\n"
             caption += f"📅 Дата: {datetime.now().strftime('%d.%m.%Y %H:%M:%S')}\n"
             caption += f"💽 Размер: {backup_size:.2f} МБ\n"
             caption += f"👥 Пользователей: {stats.get('total_users', 0):,}\n"
@@ -65,7 +65,7 @@ async def create_backup_manual(message: types.Message):
     
     except Exception as e:
         logging.error(f"Error creating backup: {e}")
-        await message.answer(f"❌ Ошибка создания бэкапа: {e}")
+        await message.answer(f"❌ Ошибка создания резервной копии: {e}")
 
 
 @dp.message(F.text == "🔍 Расширенный поиск")
@@ -128,11 +128,12 @@ async def search_by_group(callback_query: types.CallbackQuery, state: FSMContext
     await callback_query.answer()
     await state.set_state(Form.waiting_for_group_filter)
     
+    from ..keyboards.settings_menu import get_cancel_keyboard
     await bot.send_message(
         callback_query.message.chat.id,
         "🎯 Введите название группы для поиска:\n"
-        "Например: <code>Название группы</code>\n\n"
-        "Или отправьте /cancel для отмены",
+        "Например: <code>Название группы</code>",
+        reply_markup=get_cancel_keyboard(),
         parse_mode="HTML"
     )
 
@@ -140,11 +141,6 @@ async def search_by_group(callback_query: types.CallbackQuery, state: FSMContext
 @dp.message(Form.waiting_for_group_filter)
 async def process_group_filter(message: types.Message, state: FSMContext):
     """Обработка поиска по группе"""
-    if message.text.strip().lower() == '/cancel':
-        await state.clear()
-        await message.answer("❌ Поиск отменен.", reply_markup=get_enhanced_main_keyboard())
-        return
-    
     try:
         group_name = message.text.strip()
         
@@ -244,11 +240,12 @@ async def search_by_date(callback_query: types.CallbackQuery, state: FSMContext)
     await callback_query.answer()
     await state.set_state(Form.waiting_for_date)
     
+    from ..keyboards.settings_menu import get_cancel_keyboard
     await bot.send_message(
         callback_query.message.chat.id,
         "📅 Введите дату для поиска в формате ДД.ММ.ГГГГ:\n"
-        "Например: <code>15.01.2024</code>\n\n"
-        "Или отправьте /cancel для отмены",
+        "Например: <code>15.01.2024</code>",
+        reply_markup=get_cancel_keyboard(),
         parse_mode="HTML"
     )
 
