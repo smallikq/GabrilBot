@@ -1,25 +1,44 @@
 # Конфиденциальные данные
 parser_cfg.py
+bot/data/parser_cfg.py
+config.env
 *.session
 session_*
+.session
+.session-journal
 
 # База данных
 all_users.xlsx
+all_users.db
+bot/data/all_users.db
+*.db
+*.db-journal
+*.sqlite
+*.sqlite3
+
+# Резервные копии
+*.backup_*
+*.bak
 
 # Логи
 *.log
 logs/
 bot_logs.log
+bot/data/logs/
 
 # Временные файлы
 temp/
+bot/data/temp/
 *.tmp
 *.temp
 
-# Экспорты и бэкапы
+# Экспорты и результаты
 exports/
+bot/data/exports/
 backups/
+bot/data/backups/
 reply/
+bot/data/reply/
 
 # Python
 __pycache__/
@@ -76,11 +95,6 @@ Thumbs.db
 # Environments
 .env
 .venv
-env/
-venv/
-ENV/
-env.bak/
-venv.bak/
 
 # mypy
 .mypy_cache/

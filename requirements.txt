@@ -4,3 +4,5 @@ pandas==2.1.4
 openpyxl==3.1.2
 tqdm==4.66.1
 aiofiles==23.2.1
+matplotlib>=3.10.0
+# SQL database support (no additional dependencies needed - sqlite3 is in Python stdlib)
