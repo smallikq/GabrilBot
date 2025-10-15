@@ -231,6 +231,36 @@ async def handle_process_range(callback_query: types.CallbackQuery):
                     errors_count += 1
                     current_date += pd.Timedelta(days=1)
             
+            # Создаём объединённый файл за весь диапазон
+            combined_file = None
+            if all_files:
+                try:
+                    # Читаем все файлы и объединяем данные
+                    all_dataframes = []
+                    for file_path in all_files:
+                        if os.path.exists(file_path):
+                            df = pd.read_excel(file_path)
+                            all_dataframes.append(df)
+
+                    if all_dataframes:
+                        # Объединяем все DataFrame
+                        combined_df = pd.concat(all_dataframes, ignore_index=True)
+
+                        # Удаляем дубликаты по User_id (оставляем последнее вхождение)
+                        combined_df = combined_df.drop_duplicates(subset=['User_id'], keep='last')
+
+                        # Создаём объединённый файл
+                        date_range_str = f"{start_date.strftime('%Y-%m-%d')}_to_{end_date.strftime('%Y-%m-%d')}"
+                        combined_file = f'bot/data/exports/range_{date_range_str}.xlsx'
+
+                        os.makedirs('bot/data/exports', exist_ok=True)
+                        combined_df.to_excel(combined_file, index=False)
+
+                        logging.info(f"Combined file created: {combined_file} with {len(combined_df)} unique users")
+
+                except Exception as e:
+                    logging.error(f"Error creating combined file: {e}")
+
             # Итоговый отчет
             final_text = f"🎉 <b>Обработка диапазона завершена!</b>\n\n"
             final_text += f"📊 <b>Статистика:</b>\n"
@@ -238,15 +268,35 @@ async def handle_process_range(callback_query: types.CallbackQuery):
             final_text += f"• Ошибок: {errors_count}\n"
             final_text += f"• Создано файлов: {len(all_files)}\n"
             final_text += f"• Эффективность: {processed_count / days_count * 100:.1f}%"
-            
+
             await bot.edit_message_text(
                 text=final_text,
                 chat_id=callback_query.message.chat.id,
                 message_id=callback_query.message.message_id,
                 parse_mode="HTML"
             )
-            
-            # Отправляем базу данных
+
+            # Отправляем объединённый файл за диапазон
+            if combined_file and os.path.exists(combined_file):
+                from aiogram.types import FSInputFile
+                try:
+                    combined_df_stats = pd.read_excel(combined_file)
+                    caption = f"📋 <b>Объединённый файл за период</b>\n\n"
+                    caption += f"📅 Период: {start_date.strftime('%d.%m.%Y')} - {end_date.strftime('%d.%m.%Y')}\n"
+                    caption += f"📊 Всего уникальных пользователей: {len(combined_df_stats):,}\n"
+                    caption += f"📁 Дней обработано: {processed_count}"
+
+                    await bot.send_document(
+                        callback_query.message.chat.id,
+                        FSInputFile(combined_file, filename=f'range_{start_date.strftime("%d.%m.%Y")}-{end_date.strftime("%d.%m.%Y")}.xlsx'),
+                        caption=caption,
+                        parse_mode="HTML"
+                    )
+                except Exception as e:
+                    logging.error(f"Error sending combined file: {e}")
+                    await bot.send_message(callback_query.message.chat.id, f"⚠️ Ошибка отправки файла: {e}")
+
+            # Отправляем обновлённую базу данных
             from bot.handlers.parser import send_enhanced_database
             await send_enhanced_database(callback_query.message.chat.id, end_date)
             

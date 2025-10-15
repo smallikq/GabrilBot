@@ -141,6 +141,39 @@ async def handle_process_missed_enhanced(callback_query: types.CallbackQuery):
                 logging.error(f"Error processing missed day {day}: {e}")
                 errors_count += 1
 
+        # Создаём объединённый файл за все пропущенные дни
+        combined_file = None
+        if all_reply_files:
+            try:
+                import pandas as pd
+                # Читаем все файлы и объединяем данные
+                all_dataframes = []
+                for file_path in all_reply_files:
+                    if os.path.exists(file_path):
+                        df = pd.read_excel(file_path)
+                        all_dataframes.append(df)
+
+                if all_dataframes:
+                    # Объединяем все DataFrame
+                    combined_df = pd.concat(all_dataframes, ignore_index=True)
+
+                    # Удаляем дубликаты по User_id (оставляем последнее вхождение)
+                    combined_df = combined_df.drop_duplicates(subset=['User_id'], keep='last')
+
+                    # Создаём объединённый файл
+                    start_date = min(pending_missed_days)
+                    end_date = max(pending_missed_days)
+                    date_range_str = f"{start_date.strftime('%Y-%m-%d')}_to_{end_date.strftime('%Y-%m-%d')}"
+                    combined_file = f'bot/data/exports/missed_days_{date_range_str}.xlsx'
+
+                    os.makedirs('bot/data/exports', exist_ok=True)
+                    combined_df.to_excel(combined_file, index=False)
+
+                    logging.info(f"Combined missed days file created: {combined_file} with {len(combined_df)} unique users")
+
+            except Exception as e:
+                logging.error(f"Error creating combined missed days file: {e}")
+
         # Создаем итоговый отчет
         final_text = f"🎉 <b>Обработка завершена!</b>\n\n"
         final_text += f"📊 <b>Детальная статистика:</b>\n"
@@ -157,21 +190,28 @@ async def handle_process_missed_enhanced(callback_query: types.CallbackQuery):
             parse_mode="HTML"
         )
 
-        # Отправляем все файлы
-        if all_reply_files:
-            await callback_query.message.answer(f"📋 Отправляю {len(all_reply_files)} файлов результатов...")
+        # Отправляем объединённый файл за все пропущенные дни
+        if combined_file and os.path.exists(combined_file):
+            try:
+                import pandas as pd
+                combined_df_stats = pd.read_excel(combined_file)
+                start_date = min(pending_missed_days)
+                end_date = max(pending_missed_days)
 
-            for file_path in all_reply_files:
-                if os.path.exists(file_path):
-                    try:
-                        with open(file_path, 'rb') as file:
-                            await bot.send_document(
-                                callback_query.message.chat.id,
-                                FSInputFile(file_path, filename=os.path.basename(file_path)),
-                                caption=f"📋 {os.path.basename(file_path)}"
-                            )
-                    except Exception as e:
-                        logging.error(f"Error sending missed day file: {e}")
+                caption = f"📋 <b>Объединённый файл за пропущенные дни</b>\n\n"
+                caption += f"📅 Период: {start_date.strftime('%d.%m.%Y')} - {end_date.strftime('%d.%m.%Y')}\n"
+                caption += f"📊 Всего уникальных пользователей: {len(combined_df_stats):,}\n"
+                caption += f"📁 Дней обработано: {processed_count}"
+
+                await bot.send_document(
+                    callback_query.message.chat.id,
+                    FSInputFile(combined_file, filename=f'missed_days_{start_date.strftime("%d.%m.%Y")}-{end_date.strftime("%d.%m.%Y")}.xlsx'),
+                    caption=caption,
+                    parse_mode="HTML"
+                )
+            except Exception as e:
+                logging.error(f"Error sending combined missed days file: {e}")
+                await bot.send_message(callback_query.message.chat.id, f"⚠️ Ошибка отправки файла: {e}")
 
         await send_enhanced_database(callback_query.message.chat.id, max(pending_missed_days))
 
