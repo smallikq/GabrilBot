@@ -1,7 +1,7 @@
 from aiogram import types, F
 
 from ..keyboards.settings_menu import get_settings_keyboard
-from ..aiogram_loader import dp, user_settings, bot
+from ..aiogram_loader import dp, user_settings, get_bot
 
 
 def get_settings_text(user_id: int) -> str:
@@ -38,8 +38,9 @@ async def toggle_notifications(callback_query: types.CallbackQuery):
 
     status = "включены" if not current else "выключены"
     await callback_query.answer(f"Уведомления {status}")
-    
+
     # Обновляем сообщение
+    bot = get_bot()
     settings = user_settings.get(user_id, {})
     settings_text = get_settings_text(user_id)
     await bot.edit_message_text(
@@ -63,8 +64,9 @@ async def toggle_backup(callback_query: types.CallbackQuery):
 
     status = "включены" if not current else "выключены"
     await callback_query.answer(f"Автобэкапы {status}")
-    
+
     # Обновляем сообщение
+    bot = get_bot()
     settings = user_settings.get(user_id, {})
     settings_text = get_settings_text(user_id)
     await bot.edit_message_text(
@@ -80,8 +82,8 @@ async def toggle_backup(callback_query: types.CallbackQuery):
 async def change_export_format(callback_query: types.CallbackQuery):
     """Изменение формата экспорта"""
     from ..keyboards.settings_menu import get_export_format_keyboard
-    from ..aiogram_loader import bot
-    
+
+    bot = get_bot()
     await callback_query.answer()
     await bot.send_message(
         callback_query.message.chat.id,
@@ -101,8 +103,9 @@ async def set_export_format(callback_query: types.CallbackQuery):
     user_settings[user_id]['export_format'] = format_type
     
     await callback_query.answer(f"Формат экспорта: {format_type.upper()}")
-    
+
     # Отправляем обновленные настройки в главное меню настроек
+    bot = get_bot()
     settings = user_settings.get(user_id, {})
     settings_text = get_settings_text(user_id)
     await bot.send_message(
@@ -125,8 +128,9 @@ async def reset_settings(callback_query: types.CallbackQuery):
     }
     
     await callback_query.answer("Настройки сброшены")
-    
+
     # Обновляем сообщение
+    bot = get_bot()
     settings = user_settings.get(user_id, {})
     settings_text = get_settings_text(user_id)
     await bot.edit_message_text(
